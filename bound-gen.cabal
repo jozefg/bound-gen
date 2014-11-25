@@ -1,6 +1,11 @@
 name:                bound-gen
 version:             0.1.0.0
 synopsis:            Unwrap Scope's with globally fresh values
+description:
+            It's quite common when working with bound to need to unwrap a @Scope@.
+            In order to ensure that this can be done safely, without shadowing
+            any existing free variables, @bound-gen@ glues @monad-gen@'s fresh
+            value monad into @bound@.
 license:             MIT
 license-file:        LICENSE
 author:              Danny Gratzer
