@@ -24,3 +24,7 @@ type MonadUnwrap m = MonadGen Counter m
 
 freshify :: (MonadUnwrap m, Functor m) => Name a -> m (Name a)
 freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
+
+unwrap :: (Monad f, Functor m, MonadUnwrap m)
+          => a -> Scope () f (Name a) -> m (Name a, f (Name a))
+unwrap a s = (\n -> (n, instantiate1 (return n) s)) <$> freshify (name a)
