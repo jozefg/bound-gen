@@ -1,7 +1,27 @@
-module Bound.Unwrap where
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+module Bound.Unwrap (Name, name, UnwrapT, runUnwrapT) where
 import Bound
 import Control.Applicative
+import Control.Monad
 import Control.Monad.Gen
+
+data Name a = Name { fresh :: Int
+                   , uname :: a }
+            deriving (Eq, Ord)
+
+name :: a -> Name a
+name = Name 0
+
+newtype UnwrapT m a = Unwrap {unwrap :: GenT Int m a}
+                    deriving (Functor,
+                              Applicative,
+                              Alternative,
+                              Monad,
+                              MonadPlus)
+runUnwrapT :: Monad m => UnwrapT m a -> m a
+runUnwrapT = runGenT . unwrap
+
+
 
 -- | Substitute a single bound variable for a free one.
 unbindWith :: Monad f => a -> Scope () f a -> f a
