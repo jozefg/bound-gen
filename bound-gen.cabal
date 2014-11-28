@@ -21,6 +21,6 @@ library
   exposed-modules:     Bound.Unwrap
   build-depends:       base >=4.0 && < 5
                      , bound
-                     , monad-gen >= 0.2
+                     , monad-gen >= 0.3
   hs-source-dirs:      src
   default-language:    Haskell2010
