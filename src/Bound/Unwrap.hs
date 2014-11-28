@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Bound.Unwrap (Name,
+module Bound.Unwrap (Fresh,
                      name,
                      Counter,
                      UnwrapT,
@@ -14,12 +14,12 @@ import Control.Monad.Identity
 import Control.Applicative
 import Control.Monad.Gen
 
-data Name a = Name { fresh :: !Int
+data Fresh a = Fresh { fresh :: !Int
                    , uname :: a }
             deriving (Eq, Ord)
 
-name :: a -> Name a
-name = Name 0
+name :: a -> Fresh a
+name = Fresh 0
 
 -- Keeping this opaque, but I don't want *another*
 -- monad for counting dammit. I built one and that was enough.
@@ -35,9 +35,9 @@ runUnwrapT = runGenTWith (successor $ Counter . succ . getCounter) (Counter 0)
 runUnwrap :: Gen Counter a -> a
 runUnwrap = runIdentity . runUnwrapT
 
-freshify :: (MonadUnwrap m, Functor m) => Name a -> m (Name a)
+freshify :: (MonadUnwrap m, Functor m) => Fresh a -> m (Fresh a)
 freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
 
 unwrap :: (Monad f, Functor m, MonadUnwrap m)
-          => a -> Scope () f (Name a) -> m (Name a, f (Name a))
+          => a -> Scope () f (Fresh a) -> m (Fresh a, f (Fresh a))
 unwrap a s = (\n -> (n, instantiate1 (return n) s)) <$> freshify (name a)
