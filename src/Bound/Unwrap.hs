@@ -15,8 +15,8 @@ import Control.Applicative
 import Control.Monad.Gen
 
 data Fresh a = Fresh { fresh :: !Int
-                   , uname :: a }
-            deriving (Eq, Ord)
+                     , uname :: a }
+             deriving (Eq, Ord)
 
 name :: a -> Fresh a
 name = Fresh 0
@@ -40,4 +40,10 @@ freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
 
 unwrap :: (Monad f, Functor m, MonadUnwrap m)
           => a -> Scope () f (Fresh a) -> m (Fresh a, f (Fresh a))
-unwrap a s = (\n -> (n, instantiate1 (return n) s)) <$> freshify (name a)
+unwrap a s = fmap head <$> unwrapAll a [s]
+
+unwrapAll :: (Monad f, Functor m, MonadUnwrap m)
+             => a -> [Scope () f (Fresh a)] -> m (Fresh a, [f (Fresh a)])
+unwrapAll a ss = do
+  nm <- freshify (name a)
+  return $ (nm, map (instantiate1 $ return nm) ss)
