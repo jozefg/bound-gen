@@ -10,6 +10,7 @@ module Bound.Unwrap (Name,
                      runUnwrap,
                      unwrap) where
 import Bound
+import Control.Monad.Identity
 import Control.Applicative
 import Control.Monad.Gen
 
@@ -32,7 +33,7 @@ runUnwrapT :: Monad m => GenT Counter m a -> m a
 runUnwrapT = runGenTWith (successor $ Counter . succ . getCounter) (Counter 0)
 
 runUnwrap :: Gen Counter a -> a
-runUnwrap = runGenWith (successor $ Counter . succ . getCounter) (Counter 0)
+runUnwrap = runIdentity . runUnwrapT
 
 freshify :: (MonadUnwrap m, Functor m) => Name a -> m (Name a)
 freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
