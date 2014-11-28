@@ -1,5 +1,6 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Bound.Unwrap (Name, name, UnwrapT, runUnwrapT) where
+module Bound.Unwrap (Name, name, Counter, UnwrapT, Unwrap) where
 import Bound
 import Control.Applicative
 import Control.Monad
@@ -12,31 +13,10 @@ data Name a = Name { fresh :: Int
 name :: a -> Name a
 name = Name 0
 
-newtype UnwrapT m a = Unwrap {unwrap :: GenT Int m a}
-                    deriving (Functor,
-                              Applicative,
-                              Alternative,
-                              Monad,
-                              MonadPlus)
-runUnwrapT :: Monad m => UnwrapT m a -> m a
-runUnwrapT = runGenT . unwrap
+-- Keeping this opaque, but I don't want *another*
+-- monad for counting dammit. I built one and that was enough.
+newtype Counter = Counter {getCounter :: Int}
 
-
-
--- | Substitute a single bound variable for a free one.
-unbindWith :: Monad f => a -> Scope () f a -> f a
-unbindWith = instantiate1 . return
-
--- | Unbind a list of scopes together with the same free
--- variable.
-unbindTogether :: (Monad f, Functor m, MonadGen a m)
-                  => [Scope () f a] -> m [f a]
-unbindTogether [] = return [] -- Avoid an unnecessary gen
-unbindTogether scopes = (\a -> map (unbindWith a) scopes) <$> gen
-
--- | The core of the library. Use a 'MonadGen' instance to generate a
--- fresh free variable and instantiate a scope with it. This is useful
--- for working under a binder without fear of shadowing an existing
--- free variable.
-unbind :: (Monad f, Functor m, MonadGen a m) => Scope () f a -> m (f a)
-unbind scope = flip unbindWith scope <$> gen
+type UnwrapT = GenT Counter
+type Unwrap = Gen Counter
+type MonadUnwrap m = MonadGen Counter m
