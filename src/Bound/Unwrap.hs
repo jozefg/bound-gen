@@ -4,10 +4,9 @@
 module Bound.Unwrap (Name, name, Counter, UnwrapT, Unwrap) where
 import Bound
 import Control.Applicative
-import Control.Monad
 import Control.Monad.Gen
 
-data Name a = Name { fresh :: Int
+data Name a = Name { fresh :: !Int
                    , uname :: a }
             deriving (Eq, Ord)
 
