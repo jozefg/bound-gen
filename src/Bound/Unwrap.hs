@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Bound.Unwrap (Name, name, Counter, UnwrapT, Unwrap) where
@@ -20,3 +21,6 @@ newtype Counter = Counter {getCounter :: Int}
 type UnwrapT = GenT Counter
 type Unwrap = Gen Counter
 type MonadUnwrap m = MonadGen Counter m
+
+freshify :: (MonadUnwrap m, Functor m) => Name a -> m (Name a)
+freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
