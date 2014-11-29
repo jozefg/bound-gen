@@ -1,14 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Bound.Unwrap (Fresh,
-                     name,
-                     Counter,
-                     UnwrapT,
-                     Unwrap,
-                     runUnwrapT,
-                     runUnwrap,
-                     unwrap) where
+module Bound.Unwrap ( Fresh
+                    , name
+                    , Counter
+                    , UnwrapT
+                    , Unwrap
+                    , runUnwrapT
+                    , runUnwrap
+                    , unwrap) where
 import Bound
 import Control.Monad.Identity
 import Control.Applicative
