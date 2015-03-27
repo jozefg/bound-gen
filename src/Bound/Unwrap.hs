@@ -3,6 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Bound.Unwrap ( Fresh
                     , name
+                    , freshify
                     , Counter
                     , UnwrapT
                     , Unwrap
@@ -18,32 +19,60 @@ data Fresh a = Fresh { fresh :: !Int
                      , uname :: a }
              deriving (Eq, Ord)
 
+instance Show a => Show (Fresh a) where
+  show (Fresh i a) = show i ++ '.' : show a
+
+-- | Create a name. This name isn't unique at all at this point. Once
+-- you have a name you can pass it to freshify to render it unique
+-- within the current monadic context.
 name :: a -> Fresh a
 name = Fresh 0
+
+-- | @erase@ drops the information in a 'Fresh' that makes it globally
+-- unique and gives you back the user supplied name. For obvious
+-- reasons, @erase@ isn't injective. It is the case that
+--
+-- @
+--    erase . name  = id
+--    name . erase /= id
+-- @
+erase :: Fresh a -> a
+erase = uname
 
 -- Keeping this opaque, but I don't want *another*
 -- monad for counting dammit. I built one and that was enough.
 newtype Counter = Counter {getCounter :: Int}
 
+-- | A specialized version of 'GenT' used for unwrapping things.
 type UnwrapT = GenT Counter
 type Unwrap = Gen Counter
+
+-- | A specialized constraint for monads who know how to unwrap
+-- things.
 type MonadUnwrap m = MonadGen Counter m
 
-runUnwrapT :: Monad m => GenT Counter m a -> m a
-runUnwrapT = runGenTWith (successor $ Counter . succ . getCounter) (Counter 0)
+runUnwrapT :: Monad m => UnwrapT m a -> m a
+runUnwrapT = runGenTWith (successor $ Counter . succ . getCounter)
+                         (Counter 0)
 
-runUnwrap :: Gen Counter a -> a
+runUnwrap :: Unwrap a -> a
 runUnwrap = runIdentity . runUnwrapT
 
+-- | Render a name unique within the scope of a monadic computation.
 freshify :: (MonadUnwrap m, Functor m) => Fresh a -> m (Fresh a)
 freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
 
+
 unwrap :: (Monad f, Functor m, MonadUnwrap m)
-          => a -> Scope () f (Fresh a) -> m (Fresh a, f (Fresh a))
-unwrap a s = fmap head <$> unwrapAll a [s]
+          => Fresh a
+          -> Scope () f (Fresh a)
+          -> m (Fresh a, f (Fresh a))
+unwrap nm s = fmap head <$> unwrapAll nm [s]
 
 unwrapAll :: (Monad f, Functor m, MonadUnwrap m)
-             => a -> [Scope () f (Fresh a)] -> m (Fresh a, [f (Fresh a)])
-unwrapAll a ss = do
-  nm <- freshify (name a)
-  return $ (nm, map (instantiate1 $ return nm) ss)
+             => Fresh a
+             -> [Scope () f (Fresh a)]
+             -> m (Fresh a, [f (Fresh a)])
+unwrapAll nm ss = do
+  fnm <- freshify nm
+  return $ (fnm, map (instantiate1 $ return fnm) ss)
