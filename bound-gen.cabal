@@ -1,5 +1,5 @@
 name:                bound-gen
-version:             0.1.0.0
+version:             0.1.0.2
 synopsis:            Unwrap Scope's with globally fresh values
 description:
             It's quite common when working with bound to need to unwrap a @Scope@.
@@ -19,7 +19,7 @@ source-repository head
   location: http://github.com/jozefg/bound-gen
 library
   exposed-modules:     Bound.Unwrap
-  build-depends:       base >=4.0 && < 5
+  build-depends:       base >=4.8 && < 5
                      , bound
                      , monad-gen >= 0.3
                      , mtl >= 2

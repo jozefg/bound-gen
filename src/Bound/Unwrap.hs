@@ -59,7 +59,7 @@ runUnwrap :: Unwrap a -> a
 runUnwrap = runIdentity . runUnwrapT
 
 -- | Render a name unique within the scope of a monadic computation.
-freshify :: MonadUnwrap => Fresh a -> m (Fresh a)
+freshify :: MonadUnwrap m => Fresh a -> m (Fresh a)
 freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
 
 -- | Create a name which is unique within the scope of a monadic
