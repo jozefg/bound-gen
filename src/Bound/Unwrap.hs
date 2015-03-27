@@ -9,7 +9,8 @@ module Bound.Unwrap ( Fresh
                     , Unwrap
                     , runUnwrapT
                     , runUnwrap
-                    , unwrap) where
+                    , unwrap1
+                    , unwrapAll1) where
 import Bound
 import Control.Monad.Identity
 import Control.Applicative
@@ -62,17 +63,22 @@ runUnwrap = runIdentity . runUnwrapT
 freshify :: (MonadUnwrap m, Functor m) => Fresh a -> m (Fresh a)
 freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
 
-
-unwrap :: (Monad f, Functor m, MonadUnwrap m)
+-- | Given a scope which binds one variable, unwrap it with a
+-- variable. Note that @unwrap1@ will take care of @freshify@ing the
+-- variable.
+unwrap1 :: (Monad f, Functor m, MonadUnwrap m)
           => Fresh a
           -> Scope () f (Fresh a)
           -> m (Fresh a, f (Fresh a))
-unwrap nm s = fmap head <$> unwrapAll nm [s]
+unwrap1 nm s = fmap head <$> unwrapAll1 nm [s]
 
-unwrapAll :: (Monad f, Functor m, MonadUnwrap m)
+-- | Given a list of scopes which bind one variable, unwrap them all
+-- with the same variable. Note that @unwrapAll1@ will take care of
+-- @freshify@ing the variable.
+unwrapAll1 :: (Monad f, Functor m, MonadUnwrap m)
              => Fresh a
              -> [Scope () f (Fresh a)]
              -> m (Fresh a, [f (Fresh a)])
-unwrapAll nm ss = do
+unwrapAll1 nm ss = do
   fnm <- freshify nm
   return $ (fnm, map (instantiate1 $ return fnm) ss)
