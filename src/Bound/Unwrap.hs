@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Bound.Unwrap ( Fresh
                     , name
                     , freshify
@@ -9,8 +8,8 @@ module Bound.Unwrap ( Fresh
                     , Unwrap
                     , runUnwrapT
                     , runUnwrap
-                    , unwrap1
-                    , unwrapAll1) where
+                    , unwrap
+                    , unwrapAll) where
 import Bound
 import Control.Monad.Identity
 import Control.Applicative
@@ -60,25 +59,30 @@ runUnwrap :: Unwrap a -> a
 runUnwrap = runIdentity . runUnwrapT
 
 -- | Render a name unique within the scope of a monadic computation.
-freshify :: (MonadUnwrap m, Functor m) => Fresh a -> m (Fresh a)
+freshify :: MonadUnwrap => Fresh a -> m (Fresh a)
 freshify nm = (\i -> nm{fresh = i}) <$> fmap getCounter gen
 
+-- | Create a name which is unique within the scope of a monadic
+-- computation.
+nameF :: MonadUnwrap m => a -> m (Fresh a)
+nameF = freshify . name
+
 -- | Given a scope which binds one variable, unwrap it with a
--- variable. Note that @unwrap1@ will take care of @freshify@ing the
--- variable.
-unwrap1 :: (Monad f, Functor m, MonadUnwrap m)
+-- variable. Note that @unwrap@ will take care of @freshify@ing the
+-- varable.
+unwrap :: (Monad f, Functor m, MonadUnwrap m)
           => Fresh a
           -> Scope () f (Fresh a)
           -> m (Fresh a, f (Fresh a))
-unwrap1 nm s = fmap head <$> unwrapAll1 nm [s]
+unwrap nm s = fmap head <$> unwrapAll nm [s]
 
 -- | Given a list of scopes which bind one variable, unwrap them all
--- with the same variable. Note that @unwrapAll1@ will take care of
+-- with the same variable. Note that @unwrapAll@ will take care of
 -- @freshify@ing the variable.
-unwrapAll1 :: (Monad f, Functor m, MonadUnwrap m)
+unwrapAll :: (Monad f, MonadUnwrap m)
              => Fresh a
              -> [Scope () f (Fresh a)]
              -> m (Fresh a, [f (Fresh a)])
-unwrapAll1 nm ss = do
+unwrapAll nm ss = do
   fnm <- freshify nm
   return $ (fnm, map (instantiate1 $ return fnm) ss)
