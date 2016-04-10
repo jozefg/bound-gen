@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
-module Bound.Unwrap ( Fresh
+module Bound.Unwrap ( Fresh (fresh, uname)
                     , name
                     , freshify
                     , Counter
